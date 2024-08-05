@@ -8,6 +8,15 @@ use solana_program::secp256k1_recover::secp256k1_recover;
 use crate::error::RewardVaultError;
 use crate::state::RewardVault;
 
+#[event]
+pub struct TokenDeposited {
+    project_id: Pubkey,
+    deposit_id: Pubkey,
+    token: Pubkey,
+    amount: u64,
+    signature: [u8; 64],
+}
+
 #[derive(Accounts)]
 #[instruction(deposit_param: DepositParam)]
 pub struct Deposit<'info> {
@@ -95,6 +104,14 @@ pub fn deposit(ctx: Context<Deposit>, deposit_param: DepositParam) -> Result<()>
     };
     let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
     transfer(cpi_context, deposit_param.amount)?;
+
+    emit!(TokenDeposited {
+        project_id: deposit_param.project_id,
+        deposit_id: deposit_param.deposit_id,
+        token: ctx.accounts.token_mint.key(),
+        amount: deposit_param.amount,
+        signature: deposit_param.signature,
+    });
 
     Ok(())
 }

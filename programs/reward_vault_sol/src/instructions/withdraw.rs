@@ -8,6 +8,15 @@ use solana_program::secp256k1_recover::secp256k1_recover;
 use crate::error::RewardVaultError;
 use crate::state::RewardVault;
 
+#[event]
+pub struct TokenWithdrawed {
+    project_id: Pubkey,
+    withdrawal_id: Pubkey,
+    amount: u64,
+    recipient: Pubkey,
+    signature: [u8; 64],
+}
+
 #[derive(Accounts)]
 #[instruction(withdrawal_param: WithdrawalParam)]
 pub struct Withdrawal<'info> {
@@ -91,5 +100,13 @@ pub fn withdraw(ctx: Context<Withdrawal>, withdrawal_param: WithdrawalParam) -> 
     // CPI context with signer since the fundraiser account is a PDA
     let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, &signer_seeds);
     transfer(cpi_ctx, withdrawal_param.amount)?;
+
+    emit!(TokenWithdrawed {
+        project_id: withdrawal_param.project_id,
+        withdrawal_id: withdrawal_param.withdrawal_id,
+        amount: withdrawal_param.amount,
+        recipient: ctx.accounts.recipient.key(),
+        signature: withdrawal_param.signature,
+    });
     Ok(())
 }

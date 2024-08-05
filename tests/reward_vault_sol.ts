@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program, BorshCoder, EventParser } from "@coral-xyz/anchor";
 import { RewardVaultSol } from "../target/types/reward_vault_sol";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import { expect } from "chai";
@@ -96,7 +96,7 @@ describe("reward_vault_sol", () => {
         program.programId
       );
       const signature = new Array(64).fill(0);
-      await program.methods
+      const txId = await program.methods
         .deposit({
           projectId: projectId.publicKey,
           depositId: depositId.publicKey,
@@ -112,7 +112,22 @@ describe("reward_vault_sol", () => {
           vaultTokenAccount,
         })
         .signers([depositor])
-        .rpc();
+        .rpc({ commitment: "confirmed" });
+
+      // check event
+      const tx = await connection.getTransaction(txId, {
+        commitment: "confirmed",
+      });
+      for (const log of tx.meta.logMessages) {
+        const event = program.coder.events.decode(log);
+        if (event === null) continue;
+        expect(event.name).to.eq("tokenDeposited");
+        expect(event.data.projectId.equals(projectId)).to.be.true;
+        expect(event.data.depositId.equals(depositId)).to.be.true;
+        expect(event.data.token.equals(tokenMint)).to.be.true;
+        expect(event.data.amount.eq(amount)).to.be.true;
+        expect(event.data.signature).to.eq(signature);
+      }
 
       const tokenBalance = (
         await provider.connection.getTokenAccountBalance(depositorTokenAccount)
@@ -143,7 +158,7 @@ describe("reward_vault_sol", () => {
           )
         ).value.amount
       );
-      await program.methods
+      const txId = await program.methods
         .withdraw({
           projectId: projectId.publicKey,
           withdrawalId: withdrawalId.publicKey,
@@ -158,7 +173,22 @@ describe("reward_vault_sol", () => {
           recipientTokenAccount,
           vaultTokenAccount,
         })
-        .rpc();
+        .rpc({ commitment: "confirmed" });
+
+      // check event
+      const tx = await connection.getTransaction(txId, {
+        commitment: "confirmed",
+      });
+      for (const log of tx.meta.logMessages) {
+        const event = program.coder.events.decode(log);
+        if (event === null) continue;
+        expect(event.name).to.eq("tokenWithdrawed");
+        expect(event.data.projectId.equals(projectId)).to.be.true;
+        expect(event.data.depositId.equals(withdrawalId)).to.be.true;
+        expect(event.data.token.equals(tokenMint)).to.be.true;
+        expect(event.data.amount.eq(amount)).to.be.true;
+        expect(event.data.signature).to.eq(signature);
+      }
 
       const tokenBalanceAfter = new anchor.BN(
         (

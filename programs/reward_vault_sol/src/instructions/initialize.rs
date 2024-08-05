@@ -7,7 +7,16 @@ pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
     ctx.accounts.reward_vault.set_inner(RewardVault {
         authority: ctx.accounts.authority.key(),
     });
+
+    emit!(RewardVaultInitialized {
+        authority: ctx.accounts.authority.key()
+    });
     Ok(())
+}
+
+#[event]
+pub struct RewardVaultInitialized {
+    pub authority: Pubkey,
 }
 
 #[derive(Accounts)]
