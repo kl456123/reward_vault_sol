@@ -11,13 +11,19 @@ import {
 
 describe("reward_vault_sol", () => {
   // Configure the client to use the local cluster.
-  const provider = anchor.AnchorProvider.env();
+  const envProvider = anchor.AnchorProvider.env();
+  const connection = new anchor.web3.Connection(
+    process.env.ANCHOR_PROVIDER_URL,
+    "confirmed"
+  );
+  const provider = new anchor.AnchorProvider(connection, envProvider.wallet, {
+    commitment: "confirmed",
+  });
   anchor.setProvider(provider);
 
   const program = anchor.workspace.RewardVaultSol as Program<RewardVaultSol>;
   // including wallet and connection
   const wallet = provider.wallet as anchor.Wallet;
-  const connection = provider.connection;
 
   it("basic test", async () => {
     const authority = Keypair.generate();
@@ -112,7 +118,7 @@ describe("reward_vault_sol", () => {
           vaultTokenAccount,
         })
         .signers([depositor])
-        .rpc({ commitment: "confirmed" });
+        .rpc();
 
       // check event
       const tx = await connection.getTransaction(txId, {
@@ -173,13 +179,13 @@ describe("reward_vault_sol", () => {
           recipientTokenAccount,
           vaultTokenAccount,
         })
-        .rpc({ commitment: "confirmed" });
+        .rpc();
 
       // check event
-      const tx = await connection.getTransaction(txId, {
+      const txRes = await connection.getTransaction(txId, {
         commitment: "confirmed",
       });
-      for (const log of tx.meta.logMessages) {
+      for (const log of txRes.meta.logMessages) {
         const event = program.coder.events.decode(log);
         if (event === null) continue;
         expect(event.name).to.eq("tokenWithdrawed");

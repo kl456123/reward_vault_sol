@@ -5,7 +5,7 @@ mod error;
 mod instructions;
 mod state;
 
-declare_id!("4JY65Ye7EoPiWbAn1rSLZ5JkrNYRvH37HHkcLFEtkJoa");
+declare_id!("DL1wdaytU5LXpFkhbSwDf1niLArz7qxsbnLsdRbUt2R9");
 
 #[program]
 pub mod reward_vault_sol {
