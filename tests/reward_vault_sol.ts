@@ -6,6 +6,7 @@ import { expect } from "chai";
 import {
   createMint,
   getOrCreateAssociatedTokenAccount,
+  getAssociatedTokenAddressSync,
   mintTo,
 } from "@solana/spl-token";
 
@@ -67,15 +68,11 @@ describe("reward_vault_sol", () => {
       )
     ).address;
     // create a ata account owned by program
-    const vaultTokenAccount = (
-      await getOrCreateAssociatedTokenAccount(
-        provider.connection,
-        wallet.payer,
-        tokenMint,
-        rewardVaultPda,
-        true
-      )
-    ).address;
+    const vaultTokenAccount = await getAssociatedTokenAddressSync(
+      tokenMint,
+      rewardVaultPda,
+      true
+    );
     const initialAmount = 1_000_000;
 
     await mintTo(
