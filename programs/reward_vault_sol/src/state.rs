@@ -13,13 +13,7 @@ pub struct ProjectVault {
     pub token: Pubkey,
 
     /// project id
-    pub id: Pubkey,
+    pub id: u64,
 
     pub amounts: u64,
-}
-
-#[account]
-#[derive(InitSpace, Default)]
-pub struct SignatureRecord {
-    pub is_used: bool,
 }

@@ -6,6 +6,6 @@ pub struct Claim<'info> {
 }
 
 pub fn claim(ctx: Context<Claim>) -> Result<()> {
-    msg!("Greetings from: {:?}", ctx.program_id);
+    msg!("claim called in : {:?}", ctx.program_id);
     Ok(())
 }

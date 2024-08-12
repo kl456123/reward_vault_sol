@@ -44,14 +44,16 @@ module.exports = async function (provider: AnchorProvider) {
 
   // setup tokens and ata accounts
   const depositor = wallet.payer;
-  // const tokenMint = new anchor.web3.PublicKey('7EbR2rZQPBBTUVULsWZYi6CAwaC49VEXNhxA1pA18CS8')
-  const tokenMint = await createMint(
-    provider.connection,
-    wallet.payer,
-    provider.publicKey,
-    provider.publicKey,
-    6
+  const tokenMint = new anchor.web3.PublicKey(
+    "7EbR2rZQPBBTUVULsWZYi6CAwaC49VEXNhxA1pA18CS8"
   );
+  // const tokenMint = await createMint(
+  // provider.connection,
+  // wallet.payer,
+  // provider.publicKey,
+  // provider.publicKey,
+  // 6
+  // );
   console.log("token mint: ", tokenMint);
   const depositorTokenAccount = (
     await getOrCreateAssociatedTokenAccount(
@@ -102,8 +104,8 @@ module.exports = async function (provider: AnchorProvider) {
     const signature = new Array(64).fill(0);
     const txId = await program.methods
       .deposit({
-        projectId: projectId.publicKey,
-        depositId: depositId.publicKey,
+        projectId: new anchor.BN(0),
+        depositId: new anchor.BN(0),
         amount,
         expirationTime,
         signature,
@@ -139,8 +141,8 @@ module.exports = async function (provider: AnchorProvider) {
     const withdrawalId = anchor.web3.Keypair.generate();
     const txId = await program.methods
       .withdraw({
-        projectId: projectId.publicKey,
-        withdrawalId: withdrawalId.publicKey,
+        projectId: new anchor.BN(0),
+        withdrawalId: new anchor.BN(0),
         amount,
         expirationTime,
         signature,

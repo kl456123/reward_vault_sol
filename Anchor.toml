@@ -11,7 +11,7 @@ reward_vault_sol = "Gt6HqWo2ybqa6CaQXCGxptpaCvdN2oX5iQ2kj5o512Rp"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
