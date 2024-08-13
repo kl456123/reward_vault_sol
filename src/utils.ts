@@ -131,7 +131,6 @@ export async function generateTypedSignatureOnSolana(
   actionType: ActionType,
   value: any,
   signer: Keypair,
-  verifyingContract: string,
   chainId: bigint
 ) {
   const equipPlayerSchema = borsh.struct([
@@ -140,6 +139,7 @@ export async function generateTypedSignatureOnSolana(
     borsh.u64("amount"),
     borsh.i64("expirationTime"),
     borsh.publicKey("tokenMint"),
+    borsh.publicKey("programId"),
   ]);
 
   const buffer = Buffer.alloc(1000);

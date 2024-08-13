@@ -115,7 +115,12 @@ describe("reward_vault_sol", () => {
         expirationTime,
       };
       const { actualMessage, signature, publicKey } =
-        await generateEIP712Signature(depositParam, authority, tokenMint);
+        await generateEIP712Signature(
+          depositParam,
+          authority,
+          tokenMint,
+          program.programId
+        );
       const signatureParam = {
         sig: signature,
       };
@@ -185,7 +190,12 @@ describe("reward_vault_sol", () => {
         };
 
         const { actualMessage, signature, publicKey } =
-          await generateEIP712Signature(depositParam, authority, NATIVE_MINT);
+          await generateEIP712Signature(
+            depositParam,
+            authority,
+            NATIVE_MINT,
+            program.programId
+          );
         const signatureParam = {
           sig: signature,
         };

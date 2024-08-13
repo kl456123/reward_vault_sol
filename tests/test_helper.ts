@@ -44,14 +44,14 @@ export async function generatePlainSignature() {
 export async function generateEIP712Signature(
   depositData: any,
   authority: Keypair,
-  tokenMint: PublicKey
+  tokenMint: PublicKey,
+  programId: PublicKey
 ) {
   // encode deposit data to digest
   const { signature, digest } = await generateTypedSignatureOnSolana(
     ActionType.Deposit,
-    { ...depositData, tokenMint },
+    { ...depositData, tokenMint, programId },
     authority,
-    ethers.ZeroAddress,
     1111n
   );
 

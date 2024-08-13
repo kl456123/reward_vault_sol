@@ -88,7 +88,7 @@ pub fn deposit(
     );
 
     let msg = deposit_param.try_to_vec()?;
-    let msg = [msg.as_slice(), &ctx.accounts.token_mint.key().to_bytes()].concat();
+    let msg = [msg.as_slice(), &ctx.accounts.token_mint.key().to_bytes(), &ctx.program_id.to_bytes()].concat();
 
     // Get what should be the Secp256k1Program instruction
     let ix: Instruction = load_instruction_at_checked(0, &ctx.accounts.ix_sysvar)?;
