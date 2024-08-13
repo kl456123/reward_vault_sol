@@ -4,6 +4,7 @@ mod constants;
 mod error;
 mod instructions;
 mod state;
+mod utils;
 
 declare_id!("Gt6HqWo2ybqa6CaQXCGxptpaCvdN2oX5iQ2kj5o512Rp");
 
@@ -16,8 +17,12 @@ pub mod reward_vault_sol {
         instructions::initialize(ctx)
     }
 
-    pub fn deposit(ctx: Context<Deposit>, deposit_param: DepositParam) -> Result<()> {
-        instructions::deposit(ctx, deposit_param)
+    pub fn deposit(
+        ctx: Context<Deposit>,
+        deposit_param: DepositParam,
+        signature_param: SignatureParam,
+    ) -> Result<()> {
+        instructions::deposit(ctx, deposit_param, signature_param)
     }
 
     pub fn withdraw(ctx: Context<Withdrawal>, withdrawal_param: WithdrawalParam) -> Result<()> {

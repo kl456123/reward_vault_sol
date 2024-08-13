@@ -3,10 +3,13 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
+use solana_program::instruction::Instruction;
+use solana_program::sysvar::instructions::{load_instruction_at_checked, ID as IX_ID};
 
 use crate::constants::ANCHOR_DISCRIMINATOR;
 use crate::error::RewardVaultError;
 use crate::state::{ProjectVault, RewardVault};
+use crate::utils;
 
 #[event]
 pub struct TokenDeposited {
@@ -22,14 +25,11 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
 
-    pub admin: Signer<'info>,
-
     pub token_mint: Account<'info, Mint>,
 
     #[account(
         seeds = [b"reward_vault"],
-        bump,
-        constraint = reward_vault.authority == admin.key() @RewardVaultError::InvalidSignature,
+        bump
         )]
     pub reward_vault: Account<'info, RewardVault>,
 
@@ -51,6 +51,13 @@ pub struct Deposit<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+
+    /// CHECK: The address check is needed because otherwise
+    /// the supplied Sysvar could be anything else.
+    /// The Instruction Sysvar has not been implemented
+    /// in the Anchor framework yet, so this is the safe approach.
+    #[account(address = IX_ID)]
+    pub ix_sysvar: UncheckedAccount<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -61,12 +68,37 @@ pub struct DepositParam {
     expiration_time: i64,
 }
 
-pub fn deposit(ctx: Context<Deposit>, deposit_param: DepositParam) -> Result<()> {
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct SignatureParam {
+    eth_address: [u8; 20],
+    sig: [u8; 64],
+    recovery_id: u8,
+}
+
+pub fn deposit(
+    ctx: Context<Deposit>,
+    deposit_param: DepositParam,
+    signature_param: SignatureParam,
+) -> Result<()> {
     let current_time = Clock::get()?.unix_timestamp;
     require!(
         current_time < deposit_param.expiration_time,
         RewardVaultError::ExpiredSignature
     );
+
+    let msg = deposit_param.try_to_vec()?;
+
+    // Get what should be the Secp256k1Program instruction
+    let ix: Instruction = load_instruction_at_checked(0, &ctx.accounts.ix_sysvar)?;
+
+    // Check that ix is what we expect to have been sent
+    utils::verify_secp256k1_ix(
+        &ix,
+        &signature_param.eth_address,
+        &msg,
+        &signature_param.sig,
+        signature_param.recovery_id,
+    )?;
 
     // transfer depositor's tokens to vault
     let cpi_program = ctx.accounts.token_program.to_account_info();

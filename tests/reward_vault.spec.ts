@@ -12,6 +12,7 @@ import {
   NATIVE_MINT,
   closeAccount,
 } from "@solana/spl-token";
+import { generatePlainSignature, generateEIP712Signature } from "./test_helper";
 
 describe("reward_vault_sol", () => {
   // Configure the client to use the local cluster.
@@ -107,23 +108,48 @@ describe("reward_vault_sol", () => {
         ],
         program.programId
       );
-      const txId = await program.methods
-        .deposit({
-          projectId: new anchor.BN(0),
-          depositId: new anchor.BN(0),
-          amount,
-          expirationTime,
-        })
-        .accountsPartial({
-          rewardVault: rewardVaultPda,
-          depositor: depositor.publicKey,
-          tokenMint,
-          admin: authority.publicKey,
-          depositorTokenAccount,
-          vaultTokenAccount,
-        })
-        .signers([depositor, authority])
-        .rpc();
+      const depositParam = {
+        projectId: new anchor.BN(0),
+        depositId: new anchor.BN(0),
+        amount,
+        expirationTime,
+      };
+      const { actualMessage, signature, ethAddress, recoveryId } =
+        await generateEIP712Signature(depositParam);
+      const signatureParam = {
+        ethAddress: Buffer.from(ethAddress, "hex"),
+        sig: signature,
+        recoveryId,
+      };
+
+      const txs = new anchor.web3.Transaction()
+        .add(
+          // Secp256k1 instruction
+          anchor.web3.Secp256k1Program.createInstructionWithEthAddress({
+            ethAddress,
+            message: actualMessage,
+            signature,
+            recoveryId,
+          })
+        )
+        .add(
+          await program.methods
+            .deposit(depositParam, signatureParam)
+            .accountsPartial({
+              rewardVault: rewardVaultPda,
+              depositor: depositor.publicKey,
+              tokenMint,
+              depositorTokenAccount,
+              vaultTokenAccount,
+            })
+            .instruction()
+        );
+      const txId = await anchor.web3.sendAndConfirmTransaction(
+        provider.connection,
+        txs,
+        [depositor],
+        { commitment: "confirmed" }
+      );
 
       // check event
       const tx = await connection.getTransaction(txId, {
@@ -154,24 +180,49 @@ describe("reward_vault_sol", () => {
           depositor.publicKey,
           initWrappedNativeAmount
         );
-        await program.methods
-          .deposit({
-            projectId: new anchor.BN(0),
-            depositId: new anchor.BN(0),
-            amount,
-            expirationTime,
-          })
-          .accountsPartial({
-            rewardVault: rewardVaultPda,
-            depositor: depositor.publicKey,
-            admin: authority.publicKey,
-            tokenMint: NATIVE_MINT,
-            depositorTokenAccount: depositorWrappedNativeAccount,
-            vaultTokenAccount: vaultWrappedNativeAccount,
-          })
-          .signers([depositor, authority])
-          .rpc();
+        const depositParam = {
+          projectId: new anchor.BN(0),
+          depositId: new anchor.BN(0),
+          amount,
+          expirationTime,
+        };
 
+        const { actualMessage, signature, ethAddress, recoveryId } =
+          await generateEIP712Signature(depositParam);
+        const signatureParam = {
+          ethAddress: Buffer.from(ethAddress, "hex"),
+          sig: signature,
+          recoveryId,
+        };
+
+        const txs = new anchor.web3.Transaction()
+          .add(
+            // Secp256k1 instruction
+            anchor.web3.Secp256k1Program.createInstructionWithEthAddress({
+              ethAddress,
+              message: actualMessage,
+              signature,
+              recoveryId,
+            })
+          )
+          .add(
+            await program.methods
+              .deposit(depositParam, signatureParam)
+              .accountsPartial({
+                rewardVault: rewardVaultPda,
+                depositor: depositor.publicKey,
+                tokenMint: NATIVE_MINT,
+                depositorTokenAccount: depositorWrappedNativeAccount,
+                vaultTokenAccount: vaultWrappedNativeAccount,
+              })
+              .instruction()
+          );
+        const txId = await anchor.web3.sendAndConfirmTransaction(
+          provider.connection,
+          txs,
+          [depositor],
+          { commitment: "confirmed" }
+        );
         const wrappedNativeBalance = new anchor.BN(
           (
             await provider.connection.getTokenAccountBalance(

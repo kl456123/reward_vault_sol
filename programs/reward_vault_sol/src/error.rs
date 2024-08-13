@@ -10,4 +10,7 @@ pub enum RewardVaultError {
 
     #[msg("withdraw too much")]
     WithdrawTooMuch,
+
+    #[msg("signature verification failed.")]
+    SigVerificationFailed,
 }
