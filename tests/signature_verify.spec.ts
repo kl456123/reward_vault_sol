@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { ethers } from "ethers";
 import { PublicKey, Keypair } from "@solana/web3.js";
 import secp256k1 from "secp256k1";
+import nacl from "tweetnacl";
 import { generatePlainSignature } from "./test_helper";
 
 describe("signature verification", () => {
@@ -35,13 +36,37 @@ describe("signature verification", () => {
     const txs = new anchor.web3.Transaction().add(
       // Secp256k1 instruction
       anchor.web3.Secp256k1Program.createInstructionWithEthAddress({
-        ethAddress: ethAddress.toString("hex"), // E: Cannot find name 'eth_address'.
-        message: plaintext, // E: Cannot find name 'actual_message'.
-        signature, // E: Cannot find name 'signature'.
-        recoveryId, // E: Cannot find name 'recoveryId'.
+        ethAddress: ethAddress.toString("hex"),
+        message: plaintext,
+        signature,
+        recoveryId,
       })
     );
     const txId = await provider.connection.sendTransaction(txs, [wallet.payer]);
+  });
+
+  it("signature verification by ed25519", async () => {
+    const MSG = Uint8Array.from(
+      Buffer.from("this is such a good message to sign")
+    );
+    const person = anchor.web3.Keypair.generate();
+    const signature = nacl.sign.detached(MSG, person.secretKey);
+
+    let tx = new anchor.web3.Transaction().add(
+      // Ed25519 instruction
+      anchor.web3.Ed25519Program.createInstructionWithPublicKey({
+        publicKey: person.publicKey.toBytes(),
+        message: MSG,
+        signature: signature,
+      })
+    );
+
+    const txId = await anchor.web3.sendAndConfirmTransaction(
+      provider.connection,
+      tx,
+      [wallet.payer],
+      { commitment: "confirmed" }
+    );
   });
 
   it("signature verification using ethers", async () => {
@@ -50,10 +75,10 @@ describe("signature verification", () => {
     const txs = new anchor.web3.Transaction().add(
       // Secp256k1 instruction
       anchor.web3.Secp256k1Program.createInstructionWithEthAddress({
-        ethAddress, // E: Cannot find name 'eth_address'.
-        message: actualMessage, // E: Cannot find name 'actual_message'.
-        signature, // E: Cannot find name 'signature'.
-        recoveryId, // E: Cannot find name 'recoveryId'.
+        ethAddress,
+        message: actualMessage,
+        signature,
+        recoveryId,
       })
     );
     const txId = await provider.connection.sendTransaction(txs, [wallet.payer]);

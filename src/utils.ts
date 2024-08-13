@@ -1,5 +1,7 @@
 import { ethers, BaseWallet } from "ethers";
 import * as borsh from "@coral-xyz/borsh";
+import nacl from "tweetnacl";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import * as web3 from "@solana/web3.js";
 
 export interface DepositData {
@@ -102,7 +104,8 @@ export function getTxCostInETH(txRecipt: {
   return txRecipt.gasUsed * txRecipt.gasPrice;
 }
 
-export async function generateTypedSignatureOnSolana(
+/// secp256k1
+export async function generateETHTypedSignatureOnSolana(
   actionType: ActionType,
   value: DepositData | WithdrawalData | ClaimData,
   signer: BaseWallet,
@@ -120,5 +123,30 @@ export async function generateTypedSignatureOnSolana(
   equipPlayerSchema.encode(value as DepositData, buffer);
   const digest = buffer.slice(0, equipPlayerSchema.getSpan(buffer));
   const signature = signer.signingKey.sign(ethers.keccak256(digest)).serialized;
+  return { signature, digest };
+}
+
+/// ed25519
+export async function generateTypedSignatureOnSolana(
+  actionType: ActionType,
+  value: any,
+  signer: Keypair,
+  verifyingContract: string,
+  chainId: bigint
+) {
+  const equipPlayerSchema = borsh.struct([
+    borsh.u64("projectId"),
+    borsh.u64("depositId"),
+    borsh.u64("amount"),
+    borsh.i64("expirationTime"),
+    borsh.publicKey("tokenMint"),
+  ]);
+
+  const buffer = Buffer.alloc(1000);
+  equipPlayerSchema.encode(value, buffer);
+  const digest = Uint8Array.from(
+    buffer.slice(0, equipPlayerSchema.getSpan(buffer))
+  );
+  const signature = nacl.sign.detached(digest, signer.secretKey);
   return { signature, digest };
 }

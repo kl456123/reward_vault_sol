@@ -114,22 +114,18 @@ describe("reward_vault_sol", () => {
         amount,
         expirationTime,
       };
-      const { actualMessage, signature, ethAddress, recoveryId } =
-        await generateEIP712Signature(depositParam);
+      const { actualMessage, signature, publicKey } =
+        await generateEIP712Signature(depositParam, authority, tokenMint);
       const signatureParam = {
-        ethAddress: Buffer.from(ethAddress, "hex"),
         sig: signature,
-        recoveryId,
       };
 
       const txs = new anchor.web3.Transaction()
         .add(
-          // Secp256k1 instruction
-          anchor.web3.Secp256k1Program.createInstructionWithEthAddress({
-            ethAddress,
+          anchor.web3.Ed25519Program.createInstructionWithPublicKey({
+            publicKey: publicKey.toBytes(),
             message: actualMessage,
             signature,
-            recoveryId,
           })
         )
         .add(
@@ -139,6 +135,7 @@ describe("reward_vault_sol", () => {
               rewardVault: rewardVaultPda,
               depositor: depositor.publicKey,
               tokenMint,
+              signer: authority.publicKey,
               depositorTokenAccount,
               vaultTokenAccount,
             })
@@ -187,22 +184,18 @@ describe("reward_vault_sol", () => {
           expirationTime,
         };
 
-        const { actualMessage, signature, ethAddress, recoveryId } =
-          await generateEIP712Signature(depositParam);
+        const { actualMessage, signature, publicKey } =
+          await generateEIP712Signature(depositParam, authority, NATIVE_MINT);
         const signatureParam = {
-          ethAddress: Buffer.from(ethAddress, "hex"),
           sig: signature,
-          recoveryId,
         };
 
         const txs = new anchor.web3.Transaction()
           .add(
-            // Secp256k1 instruction
-            anchor.web3.Secp256k1Program.createInstructionWithEthAddress({
-              ethAddress,
+            anchor.web3.Ed25519Program.createInstructionWithPublicKey({
+              publicKey: publicKey.toBytes(),
               message: actualMessage,
               signature,
-              recoveryId,
             })
           )
           .add(
@@ -212,6 +205,7 @@ describe("reward_vault_sol", () => {
                 rewardVault: rewardVaultPda,
                 depositor: depositor.publicKey,
                 tokenMint: NATIVE_MINT,
+                signer: authority.publicKey,
                 depositorTokenAccount: depositorWrappedNativeAccount,
                 vaultTokenAccount: vaultWrappedNativeAccount,
               })

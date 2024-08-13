@@ -58,6 +58,9 @@ pub struct Deposit<'info> {
     /// in the Anchor framework yet, so this is the safe approach.
     #[account(address = IX_ID)]
     pub ix_sysvar: UncheckedAccount<'info>,
+
+    /// CHECK: readonly
+    pub signer: UncheckedAccount<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -70,9 +73,7 @@ pub struct DepositParam {
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct SignatureParam {
-    eth_address: [u8; 20],
     sig: [u8; 64],
-    recovery_id: u8,
 }
 
 pub fn deposit(
@@ -87,18 +88,12 @@ pub fn deposit(
     );
 
     let msg = deposit_param.try_to_vec()?;
+    let msg = [msg.as_slice(), &ctx.accounts.token_mint.key().to_bytes()].concat();
 
     // Get what should be the Secp256k1Program instruction
     let ix: Instruction = load_instruction_at_checked(0, &ctx.accounts.ix_sysvar)?;
 
-    // Check that ix is what we expect to have been sent
-    utils::verify_secp256k1_ix(
-        &ix,
-        &signature_param.eth_address,
-        &msg,
-        &signature_param.sig,
-        signature_param.recovery_id,
-    )?;
+    utils::verify_ed25519_ix(&ix, &ctx.accounts.signer.key().to_bytes(), &msg, &signature_param.sig)?;
 
     // transfer depositor's tokens to vault
     let cpi_program = ctx.accounts.token_program.to_account_info();

@@ -1,9 +1,11 @@
 import { ethers, BaseWallet } from "ethers";
+import nacl from "tweetnacl";
 import {
   generateTypedSignature,
   ActionType,
   generateTypedSignatureOnSolana,
 } from "../src/utils";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import assert from "assert";
 
 export async function generatePlainSignature() {
@@ -39,24 +41,20 @@ export async function generatePlainSignature() {
   return { actualMessage, signature, ethAddress, recoveryId };
 }
 
-export async function generateEIP712Signature(depositData) {
-  const eth_signer: BaseWallet = ethers.Wallet.createRandom();
-
+export async function generateEIP712Signature(
+  depositData: any,
+  authority: Keypair,
+  tokenMint: PublicKey
+) {
   // encode deposit data to digest
-  const { signature: full_sig, digest } = await generateTypedSignatureOnSolana(
+  const { signature, digest } = await generateTypedSignatureOnSolana(
     ActionType.Deposit,
-    depositData,
-    eth_signer,
+    { ...depositData, tokenMint },
+    authority,
     ethers.ZeroAddress,
     1111n
   );
 
-  let full_sig_bytes = ethers.getBytes(full_sig);
-  const signature = full_sig_bytes.slice(0, 64);
-  const recoveryId = full_sig_bytes[64] - 27;
-  // ^ Why - 27? Check https://ethereum.github.io/yellowpaper/paper.pdf page 27.
-
-  // Calculated Ethereum Address (20 bytes) from public key (32 bytes)
-  const ethAddress = eth_signer.address.slice(2);
-  return { actualMessage: digest, signature, ethAddress, recoveryId };
+  const publicKey = authority.publicKey;
+  return { actualMessage: digest, signature, publicKey };
 }
