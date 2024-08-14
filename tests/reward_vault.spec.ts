@@ -140,7 +140,6 @@ describe("reward_vault_sol", () => {
               rewardVault: rewardVaultPda,
               depositor: depositor.publicKey,
               tokenMint,
-              signer: authority.publicKey,
               depositorTokenAccount,
               vaultTokenAccount,
             })
@@ -215,7 +214,6 @@ describe("reward_vault_sol", () => {
                 rewardVault: rewardVaultPda,
                 depositor: depositor.publicKey,
                 tokenMint: NATIVE_MINT,
-                signer: authority.publicKey,
                 depositorTokenAccount: depositorWrappedNativeAccount,
                 vaultTokenAccount: vaultWrappedNativeAccount,
               })
