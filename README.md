@@ -24,7 +24,7 @@ solana-keygen new
 
 * deploy to devnet
 ```bash
-anchor deploy --provider.cluster devent
+anchor deploy --provider.cluster devnet
 ```
 
 * run ts client to initialize reward vault on chain

@@ -10,4 +10,10 @@ pub enum RewardVaultError {
 
     #[msg("withdraw too much")]
     WithdrawTooMuch,
+
+    #[msg("signer added already")]
+    SignerAddedAlready,
+
+    #[msg("signer not exist")]
+    SignerNotExist,
 }

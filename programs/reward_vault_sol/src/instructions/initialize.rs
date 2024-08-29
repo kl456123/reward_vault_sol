@@ -4,8 +4,13 @@ use crate::constants::ANCHOR_DISCRIMINATOR;
 use crate::state::RewardVault;
 
 pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    // save bump to pda for cu optimization
+    let bump = ctx.bumps.reward_vault;
+    let signers = Vec::new();
     ctx.accounts.reward_vault.set_inner(RewardVault {
         authority: ctx.accounts.authority.key(),
+        bump,
+        signers,
     });
 
     emit!(RewardVaultInitialized {

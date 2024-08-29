@@ -4,9 +4,8 @@ use anchor_spl::{
     token::{transfer, Mint, Token, TokenAccount, Transfer},
 };
 
-use crate::constants::ANCHOR_DISCRIMINATOR;
 use crate::error::RewardVaultError;
-use crate::state::{ProjectVault, RewardVault};
+use crate::state::RewardVault;
 
 #[event]
 pub struct TokenDeposited {
@@ -28,20 +27,19 @@ pub struct Deposit<'info> {
 
     #[account(
         seeds = [b"reward_vault"],
-        bump,
-        constraint = reward_vault.authority == admin.key() @RewardVaultError::InvalidSignature,
+        bump = reward_vault.bump,
+        constraint = reward_vault.is_valid_signer(&admin.key()) @RewardVaultError::InvalidSignature,
         )]
     pub reward_vault: Account<'info, RewardVault>,
 
-    #[account(
-    init_if_needed,
-    payer=depositor,
-    space=ANCHOR_DISCRIMINATOR + ProjectVault::INIT_SPACE,
-    seeds=[b"project_vault", deposit_param.project_id.to_le_bytes().as_slice(), token_mint.key().as_ref()],
-    bump
-    )]
-    pub project_vault: Account<'info, ProjectVault>,
-
+    // #[account(
+    // init_if_needed,
+    // payer=depositor,
+    // space=ANCHOR_DISCRIMINATOR + ProjectVault::INIT_SPACE,
+    // seeds=[b"project_vault", deposit_param.project_id.to_le_bytes().as_slice(), token_mint.key().as_ref()],
+    // bump
+    // )]
+    // pub project_vault: Account<'info, ProjectVault>,
     #[account(init_if_needed, payer=depositor, associated_token::mint=token_mint, associated_token::authority=reward_vault)]
     pub vault_token_account: Account<'info, TokenAccount>,
 
@@ -79,13 +77,13 @@ pub fn deposit(ctx: Context<Deposit>, deposit_param: DepositParam) -> Result<()>
     transfer(cpi_context, deposit_param.amount)?;
 
     // update project vault account
-    if ctx.accounts.project_vault.id == 0 {
-        // init only once
-        ctx.accounts.project_vault.token = ctx.accounts.token_mint.key();
-        ctx.accounts.project_vault.id = deposit_param.project_id;
-    }
+    // if ctx.accounts.project_vault.id == 0 {
+    // // init only once
+    // ctx.accounts.project_vault.token = ctx.accounts.token_mint.key();
+    // ctx.accounts.project_vault.id = deposit_param.project_id;
+    // }
 
-    ctx.accounts.project_vault.amounts += deposit_param.amount;
+    // ctx.accounts.project_vault.amounts += deposit_param.amount;
 
     emit!(TokenDeposited {
         project_id: deposit_param.project_id,

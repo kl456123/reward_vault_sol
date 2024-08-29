@@ -5,7 +5,7 @@ mod error;
 mod instructions;
 mod state;
 
-declare_id!("Gt6HqWo2ybqa6CaQXCGxptpaCvdN2oX5iQ2kj5o512Rp");
+declare_id!("eipFhdNMUZrXwhej7vwDraJVSXyGCHExJUUKboqv1iD");
 
 #[program]
 pub mod reward_vault_sol {
@@ -24,7 +24,16 @@ pub mod reward_vault_sol {
         instructions::withdraw(ctx, withdrawal_param)
     }
 
-    pub fn claim(ctx: Context<Claim>) -> Result<()> {
-        instructions::claim(ctx)
+    pub fn claim(ctx: Context<Claim>, claim_param: ClaimParam) -> Result<()> {
+        instructions::claim(ctx, claim_param)
+    }
+
+    ////////////////// admin operations  ////////////////////////////////
+    pub fn transfer_ownership(ctx: Context<TransferOwnership>) -> Result<()> {
+        instructions::transfer_ownership(ctx)
+    }
+
+    pub fn config_signer(ctx: Context<SignerConfig>, flag: bool) -> Result<()> {
+        instructions::config_signer(ctx, flag)
     }
 }

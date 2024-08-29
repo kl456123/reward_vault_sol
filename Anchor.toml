@@ -5,14 +5,18 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-reward_vault_sol = "Gt6HqWo2ybqa6CaQXCGxptpaCvdN2oX5iQ2kj5o512Rp"
+reward_vault_sol = "eipFhdNMUZrXwhej7vwDraJVSXyGCHExJUUKboqv1iD"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+config-signer = "yarn ts-node scripts/config_signer.ts"
+transfer-ownership = "yarn ts-node scripts/transfer_ownership.ts"
+wsol_demo = "yarn ts-node scripts/wsol_demo.ts"
+token_demo = "yarn ts-node scripts/token_demo.ts"
