@@ -64,10 +64,6 @@ pub fn withdraw(ctx: Context<Withdrawal>, withdrawal_param: WithdrawalParam) -> 
         current_time < withdrawal_param.expiration_time,
         RewardVaultError::ExpiredSignature
     );
-    // require!(
-    // withdrawal_param.amount <= ctx.accounts.project_vault.amounts,
-    // RewardVaultError::WithdrawTooMuch
-    // );
 
     // transfer depositor's tokens to vault
     let cpi_program = ctx.accounts.token_program.to_account_info();
